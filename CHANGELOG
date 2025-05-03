@@ -1,4 +1,4 @@
-4.c11
-revert susfs
-revert lz4 compression
+6.c11
+
+Introduced SUSFS v1.5.5
 

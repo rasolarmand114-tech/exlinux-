@@ -4201,6 +4201,7 @@ CONFIG_CONTEXTHUB_DEBUG=y
 # CONFIG_RTL8723BS is not set
 # CONFIG_R8712U is not set
 # CONFIG_R8188EU is not set
+CONFIG_RTL8188EUS=y
 
 #
 # IIO staging drivers

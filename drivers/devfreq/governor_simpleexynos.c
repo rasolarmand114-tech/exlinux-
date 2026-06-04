@@ -36,10 +36,10 @@ static int devfreq_simple_exynos_notifier(struct notifier_block *nb, unsigned lo
 }
 
 /* Default constants for DevFreq-Simple-Exynos(DFE) */
-#define DFE_URGENTTHRESHOLD	(65)
-#define DFE_UPTHRESHOLD		(60)
-#define DFE_DOWNTHRESHOLD	(45)
-#define DFE_IDLETHRESHOLD	(30)
+#define DFE_URGENTTHRESHOLD   (68)
+#define DFE_UPTHRESHOLD       (58)
+#define DFE_DOWNTHRESHOLD     (42)
+#define DFE_IDLETHRESHOLD     (24)
 
 static int devfreq_simple_exynos_func(struct devfreq *df,
 					unsigned long *freq)

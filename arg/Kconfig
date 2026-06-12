@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0
 # arg/Kconfig
 
-config SCHAD_ARG_KMM
+config SCHED_ARG_KMM
 	tristate "ARG Scheduler Module (Rust + ARM64 Assembly)"
-	depends on SCHAD_ARG
+	depends on SCHED_ARG
 	depends on SMP
 	depends on ARM64
 	default m
@@ -21,7 +21,7 @@ config SCHAD_ARG_KMM
 	    - ARM64 feature detection (LSE/FP/SVE/CRC32/AES/SHA)
 
 	  C hook layer (kernel/sched/) stays untouched except for the
-	  5% hook infrastructure from CONFIG_SCHAD_ARG.
+	  5% hook infrastructure from CONFIG_SCHED_ARG.
 
 	  Say M (loadable module, recommended).
 	  Say N to disable.

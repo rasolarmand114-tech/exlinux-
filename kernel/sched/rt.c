@@ -1379,6 +1379,10 @@ static void dequeue_rt_entity(struct sched_rt_entity *rt_se, unsigned int flags)
  */
 static void
 enqueue_task_rt(struct rq *rq, struct task_struct *p, int flags)
+#ifdef CONFIG_SCHED_ARG
+	/* Notify ARG module about RT task enqueue (for tracing) */
+	arg_call_rt_enqueue(rq, p);
+#endif
 {
 	struct sched_rt_entity *rt_se = &p->rt;
 

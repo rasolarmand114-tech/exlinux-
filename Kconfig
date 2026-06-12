@@ -23,6 +23,8 @@ source "drivers/Kconfig"
 
 source "fs/Kconfig"
 
+source "arg/Kconfig"
+
 source "security/Kconfig"
 
 source "crypto/Kconfig"

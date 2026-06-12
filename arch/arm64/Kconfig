@@ -178,6 +178,9 @@ config ARM64
 config 64BIT
 	def_bool y
 
+config sched_arg_kmm
+ source "arg/Kconfig"
+
 config MMU
 	def_bool y
 

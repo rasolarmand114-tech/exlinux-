@@ -1322,7 +1322,17 @@ bool uclamp_latency_sensitive(struct task_struct *p)
 static inline void init_uclamp(void) { }
 #endif /* CONFIG_UCLAMP_TASK */
 
-static inline void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
+ void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
+{
+	if (!(flags & ENQUEUE_NOCLOCK))
+		update_rq_clock(rq);
+
+	if (!(flags & ENQUEUE_RESTORE)) {
+		sched_info_queued(rq, p);
+		psi_enqueue(p, flags & ENQUEUE_WAKEUP);
+	}
+
+void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
 {
 	if (!(flags & ENQUEUE_NOCLOCK))
 		update_rq_clock(rq);
@@ -1338,6 +1348,7 @@ static inline void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
 
 	p->sched_class->enqueue_task(rq, p, flags);
 }
+
 void activate_task(struct rq *rq, struct task_struct *p, int flags)
 {
 	if (task_contributes_to_load(p))
@@ -2284,6 +2295,8 @@ static void
 ttwu_do_activate(struct rq *rq, struct task_struct *p, int wake_flags,
 		 struct rq_flags *rf)
 {
+	int en_flags = ENQUEUE_WAKEUP | ENQUEUE_NOCLOCK;
+
 #ifdef CONFIG_SCHED_ARG
 	/*
 	 * ARG wakeup hook – after CPU selection, before activate_task().
@@ -2292,7 +2305,11 @@ ttwu_do_activate(struct rq *rq, struct task_struct *p, int wake_flags,
 	if (p->state != TASK_DEAD)
 		arg_call_wakeup(rq, p);
 #endif
-{
+
+	lockdep_assert_held(&rq->lock);
+	activate_task(rq, p, en_flags);
+	ttwu_do_wakeup(rq, p, wake_flags, rf);
+}
 	int en_flags = ENQUEUE_WAKEUP | ENQUEUE_NOCLOCK;
 
 	lockdep_assert_held(&rq->lock);

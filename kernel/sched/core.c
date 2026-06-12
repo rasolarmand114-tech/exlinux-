@@ -1302,6 +1302,14 @@ unsigned int uclamp_task(struct task_struct *p)
 	return util;
 }
 
+bool uclamp_boosted(struct task_struct *p)
+{
+#ifdef CONFIG_SCHED_TUNE
+	return schedtune_task_boost(p) > 0;
+#endif
+	return false;
+}
+
 bool uclamp_latency_sensitive(struct task_struct *p)
 {
 #ifdef CONFIG_SCHED_TUNE
@@ -1314,7 +1322,7 @@ bool uclamp_latency_sensitive(struct task_struct *p)
 static inline void init_uclamp(void) { }
 #endif /* CONFIG_UCLAMP_TASK */
 
-void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
+static inline void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
 {
 	if (!(flags & ENQUEUE_NOCLOCK))
 		update_rq_clock(rq);
@@ -1324,11 +1332,30 @@ void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
 		psi_enqueue(p, flags & ENQUEUE_WAKEUP);
 	}
 
+	update_cpu_active_ratio(rq, p, EMS_PART_ENQUEUE);
+
 #ifdef CONFIG_SCHED_ARG
 	arg_call_enqueue(rq, p);
 #endif
 
+	uclamp_rq_inc(rq, p);
 	p->sched_class->enqueue_task(rq, p, flags);
+}
+
+static inline void dequeue_task(struct rq *rq, struct task_struct *p, int flags)
+{
+	if (!(flags & DEQUEUE_NOCLOCK))
+		update_rq_clock(rq);
+
+	if (!(flags & DEQUEUE_SAVE)) {
+		sched_info_dequeued(rq, p);
+		psi_dequeue(p, flags & DEQUEUE_SLEEP);
+	}
+
+	update_cpu_active_ratio(rq, p, EMS_PART_DEQUEUE);
+
+	uclamp_rq_dec(rq, p);
+	p->sched_class->dequeue_task(rq, p, flags);
 }
 
 void activate_task(struct rq *rq, struct task_struct *p, int flags)
@@ -1346,6 +1373,15 @@ void deactivate_task(struct rq *rq, struct task_struct *p, int flags)
 
 	dequeue_task(rq, p, flags);
 }
+
+/*
+ * __normal_prio - return the priority that is based on the static prio
+ */
+static inline int __normal_prio(struct task_struct *p)
+{
+	return p->static_prio;
+}
+
 /*
  * Calculate the expected normal priority: i.e. priority
  * without taking RT-inheritance into account. Might be
@@ -2270,22 +2306,16 @@ ttwu_do_activate(struct rq *rq, struct task_struct *p, int wake_flags,
 {
 	int en_flags = ENQUEUE_WAKEUP | ENQUEUE_NOCLOCK;
 
+	lockdep_assert_held(&rq->lock);
+
 #ifdef CONFIG_SCHED_ARG
 	/*
-	 * ARG wakeup hook – after CPU selection, before activate_task().
+	 * ARG wakeup hook - after CPU selection, before activate_task().
 	 * Always under rq->lock.
 	 */
 	if (p->state != TASK_DEAD)
 		arg_call_wakeup(rq, p);
 #endif
-
-	lockdep_assert_held(&rq->lock);
-	activate_task(rq, p, en_flags);
-	ttwu_do_wakeup(rq, p, wake_flags, rf);
-}
-	int en_flags = ENQUEUE_WAKEUP | ENQUEUE_NOCLOCK;
-
-	lockdep_assert_held(&rq->lock);
 
 #ifdef CONFIG_SMP
 	if (p->sched_contributes_to_load)
@@ -3964,23 +3994,24 @@ static inline void schedule_debug(struct task_struct *prev)
  */
 static inline struct task_struct *
 pick_next_task(struct rq *rq, struct task_struct *prev, struct rq_flags *rf)
-	const struct sched_class *class = &fair_sched_class;
-	struct task_struct *p;
-
-#ifdef CONFIG_SCHED_ARG
-	/* ARG override – only when no RT tasks are runnable */
-	if (!rq->rt.rt_nr_running) {
-		p = arg_call_pick_next(rq);
-		if (p)
-			return p;
-	}
-#endif
-
-	/*
-	 * Optimization: we know that if all tasks are in
 {
 	const struct sched_class *class;
 	struct task_struct *p;
+
+#ifdef CONFIG_SCHED_ARG
+	/*
+	 * ARG pick_next hook.
+	 * Rules: must never return an RT/DL task; NULL = let CFS decide.
+	 * Skip completely when RT tasks are runnable to prevent latency.
+	 */
+	if (!rq->rt.rt_nr_running) {
+		p = arg_call_pick_next(rq);
+		if (p) {
+			WARN_ON_ONCE(rt_task(p) || dl_task(p));
+			return p;
+		}
+	}
+#endif
 
 	/*
 	 * Optimization: we know that if all tasks are in the fair class we can

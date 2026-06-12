@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: GPL-2.0
+# arg/Kconfig
+
+config SCHAD_ARG_KMM
+	tristate "ARG Scheduler Module (Rust + ARM64 Assembly)"
+	depends on SCHAD_ARG
+	depends on SMP
+	depends on ARM64
+	default m
+	help
+	  ARG Scheduler Layer — 95% of ARG project logic.
+	  Implements in Rust + ARM64 Assembly:
+	    - Task Packing        (energy saving)
+	    - Async / Gaming mode (arg_async=1)
+	    - Sync / Throughput   (arg_async=0)
+	    - FPS Stability       (arg_fps=1)
+	    - Energy-Aware        (arg_energy=1)
+	    - Virtual Thread Layer
+	    - big.LITTLE topology
+	    - CPU Hotplug
+	    - ARM64 feature detection (LSE/FP/SVE/CRC32/AES/SHA)
+
+	  C hook layer (kernel/sched/) stays untouched except for the
+	  5% hook infrastructure from CONFIG_SCHAD_ARG.
+
+	  Say M (loadable module, recommended).
+	  Say N to disable.

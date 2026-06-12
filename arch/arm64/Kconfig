@@ -223,6 +223,10 @@ config ARCH_MMAP_RND_COMPAT_BITS_MAX
 config NO_IOPORT_MAP
 	def_bool y if !PCI
 
+config SCHED_ARG_KMM
+        tristate "arg/Kconfig"
+        default m
+
 config STACKTRACE_SUPPORT
 	def_bool y
 

@@ -1249,13 +1249,6 @@ task_rq_unlock(struct rq *rq, struct task_struct *p, struct rq_flags *rf)
 	raw_spin_unlock(&rq->lock);
 	raw_spin_unlock_irqrestore(&p->pi_lock, rf->flags);
 }
-
- * ARG Scheduler Hook Infrastructure
- *
- * Each inline helper does one smp_load_acquire on the master
- * `arg_enabled` flag and then loads the function pointer.
- * Memory ordering: module writes pointers with smp_store_release.
- * ============================================================ */
 #ifdef CONFIG_SCHED_ARG
 
 extern bool arg_enabled;
@@ -1319,7 +1312,7 @@ arg_call_rt_enqueue(struct rq *rq, struct task_struct *p)
 		fn(rq, p);
 }
 
-#else  /* !CONFIG_SCHED_ARG */
+#else
 
 static __always_inline struct task_struct *
 arg_call_pick_next(struct rq *rq) { return NULL; }
@@ -1336,7 +1329,7 @@ arg_call_update_load(void) {}
 static __always_inline void
 arg_call_rt_enqueue(struct rq *rq, struct task_struct *p) {}
 
-#endif /* CONFIG_SCHED_ARG */
+#endif
 static inline void
 rq_lock_irqsave(struct rq *rq, struct rq_flags *rf)
 	__acquires(rq->lock)

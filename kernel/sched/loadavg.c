@@ -371,22 +371,20 @@ void calc_global_load(unsigned long ticks)
  * active count.
  */
 void calc_global_load_tick(struct rq *this_rq)
-if (time_before(jiffies, this_rq->calc_load_update))
-		return;
 
-#ifdef CONFIG_SCHED_ARG
-	/*
-	 * Periodic per-CPU utilisation update for ARG.
-	 * Called at every scheduler tick.
-	 */
-	arg_call_update_load();
-#endif
 {
 	long delta;
 
 	if (time_before(jiffies, this_rq->calc_load_update))
 		return;
-
+    
+#ifdef CONFIG_SCHED_ARG
+	/*
+	 * Periodic per-CPU utilisation update for ARG.
+	 * Called at every scheduler tick.
+	 */
+	        arg_call_update_load();
+#endif
 	delta  = calc_load_fold_active(this_rq, 0);
 	if (delta)
 		atomic_long_add(delta, &calc_load_tasks);

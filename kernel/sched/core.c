@@ -1323,6 +1323,14 @@ static inline void init_uclamp(void) { }
 #endif /* CONFIG_UCLAMP_TASK */
 
 static inline void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
+	if (!(flags & ENQUEUE_RESTORE))
+		sched_info_queued(rq, p);
+
+#ifdef CONFIG_SCHED_ARG
+	arg_call_enqueue(rq, p);
+#endif
+
+	p->sched_class->enqueue_task(rq, p, flags);
 {
 	if (!(flags & ENQUEUE_NOCLOCK))
 		update_rq_clock(rq);
@@ -2299,6 +2307,15 @@ static void ttwu_do_wakeup(struct rq *rq, struct task_struct *p, int wake_flags,
 static void
 ttwu_do_activate(struct rq *rq, struct task_struct *p, int wake_flags,
 		 struct rq_flags *rf)
+{
+#ifdef CONFIG_SCHED_ARG
+	/*
+	 * ARG wakeup hook – after CPU selection, before activate_task().
+	 * Always under rq->lock.
+	 */
+	if (p->state != TASK_DEAD)
+		arg_call_wakeup(rq, p);
+#endif
 {
 	int en_flags = ENQUEUE_WAKEUP | ENQUEUE_NOCLOCK;
 
@@ -3981,6 +3998,20 @@ static inline void schedule_debug(struct task_struct *prev)
  */
 static inline struct task_struct *
 pick_next_task(struct rq *rq, struct task_struct *prev, struct rq_flags *rf)
+	const struct sched_class *class = &fair_sched_class;
+	struct task_struct *p;
+
+#ifdef CONFIG_SCHED_ARG
+	/* ARG override – only when no RT tasks are runnable */
+	if (!rq->rt.rt_nr_running) {
+		p = arg_call_pick_next(rq);
+		if (p)
+			return p;
+	}
+#endif
+
+	/*
+	 * Optimization: we know that if all tasks are in
 {
 	const struct sched_class *class;
 	struct task_struct *p;

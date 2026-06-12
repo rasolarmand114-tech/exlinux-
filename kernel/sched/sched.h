@@ -1250,6 +1250,93 @@ task_rq_unlock(struct rq *rq, struct task_struct *p, struct rq_flags *rf)
 	raw_spin_unlock_irqrestore(&p->pi_lock, rf->flags);
 }
 
+ * ARG Scheduler Hook Infrastructure
+ *
+ * Each inline helper does one smp_load_acquire on the master
+ * `arg_enabled` flag and then loads the function pointer.
+ * Memory ordering: module writes pointers with smp_store_release.
+ * ============================================================ */
+#ifdef CONFIG_SCHED_ARG
+
+extern bool arg_enabled;
+extern struct task_struct *(*arg_pick_next_hook)(struct rq *rq);
+extern void (*arg_enqueue_hook)(struct rq *rq, struct task_struct *p);
+extern void (*arg_wakeup_hook)(struct rq *rq, struct task_struct *p);
+extern void (*arg_update_load_hook)(void);
+extern void (*arg_rt_enqueue_hook)(struct rq *rq, struct task_struct *p);
+
+static __always_inline struct task_struct *
+arg_call_pick_next(struct rq *rq)
+{
+	struct task_struct *(*fn)(struct rq *);
+	if (!smp_load_acquire(&arg_enabled))
+		return NULL;
+	fn = smp_load_acquire(&arg_pick_next_hook);
+	return likely(fn) ? fn(rq) : NULL;
+}
+
+static __always_inline void
+arg_call_enqueue(struct rq *rq, struct task_struct *p)
+{
+	void (*fn)(struct rq *, struct task_struct *);
+	if (!smp_load_acquire(&arg_enabled))
+		return;
+	fn = smp_load_acquire(&arg_enqueue_hook);
+	if (likely(fn))
+		fn(rq, p);
+}
+
+static __always_inline void
+arg_call_wakeup(struct rq *rq, struct task_struct *p)
+{
+	void (*fn)(struct rq *, struct task_struct *);
+	if (!smp_load_acquire(&arg_enabled))
+		return;
+	fn = smp_load_acquire(&arg_wakeup_hook);
+	if (likely(fn))
+		fn(rq, p);
+}
+
+static __always_inline void
+arg_call_update_load(void)
+{
+	void (*fn)(void);
+	if (!smp_load_acquire(&arg_enabled))
+		return;
+	fn = smp_load_acquire(&arg_update_load_hook);
+	if (likely(fn))
+		fn();
+}
+
+static __always_inline void
+arg_call_rt_enqueue(struct rq *rq, struct task_struct *p)
+{
+	void (*fn)(struct rq *, struct task_struct *);
+	if (!smp_load_acquire(&arg_enabled))
+		return;
+	fn = smp_load_acquire(&arg_rt_enqueue_hook);
+	if (likely(fn))
+		fn(rq, p);
+}
+
+#else  /* !CONFIG_SCHED_ARG */
+
+static __always_inline struct task_struct *
+arg_call_pick_next(struct rq *rq) { return NULL; }
+
+static __always_inline void
+arg_call_enqueue(struct rq *rq, struct task_struct *p) {}
+
+static __always_inline void
+arg_call_wakeup(struct rq *rq, struct task_struct *p) {}
+
+static __always_inline void
+arg_call_update_load(void) {}
+
+static __always_inline void
+arg_call_rt_enqueue(struct rq *rq, struct task_struct *p) {}
+
+#endif /* CONFIG_SCHED_ARG */
 static inline void
 rq_lock_irqsave(struct rq *rq, struct rq_flags *rf)
 	__acquires(rq->lock)

@@ -1302,14 +1302,6 @@ unsigned int uclamp_task(struct task_struct *p)
 	return util;
 }
 
-bool uclamp_boosted(struct task_struct *p)
-{
-#ifdef CONFIG_SCHED_TUNE
-	return schedtune_task_boost(p) > 0;
-#endif
-	return false;
-}
-
 bool uclamp_latency_sensitive(struct task_struct *p)
 {
 #ifdef CONFIG_SCHED_TUNE
@@ -1321,16 +1313,6 @@ bool uclamp_latency_sensitive(struct task_struct *p)
 
 static inline void init_uclamp(void) { }
 #endif /* CONFIG_UCLAMP_TASK */
-
- void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
-{
-	if (!(flags & ENQUEUE_NOCLOCK))
-		update_rq_clock(rq);
-
-	if (!(flags & ENQUEUE_RESTORE)) {
-		sched_info_queued(rq, p);
-		psi_enqueue(p, flags & ENQUEUE_WAKEUP);
-	}
 
 void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
 {
@@ -1364,15 +1346,6 @@ void deactivate_task(struct rq *rq, struct task_struct *p, int flags)
 
 	dequeue_task(rq, p, flags);
 }
-
-/*
- * __normal_prio - return the priority that is based on the static prio
- */
-static inline int __normal_prio(struct task_struct *p)
-{
-	return p->static_prio;
-}
-
 /*
  * Calculate the expected normal priority: i.e. priority
  * without taking RT-inheritance into account. Might be

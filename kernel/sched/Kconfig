@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: GPL-2.0
+
+config SCHED_ARG
+	bool "ARG Scheduler Hook Infrastructure"
+	depends on SMP
+	depends on ARM64 || COMPILE_TEST
+	default n
+	help
+	  Lightweight hook layer for the ARG (Advanced Resource Governor)
+	  scheduler module. Contains zero scheduling policy.
+
+	  Inserts 5 hook points in CFS core path:
+	    enqueue_task, ttwu_do_activate, pick_next_task,
+	    calc_global_load_tick, enqueue_task_rt.
+
+	  Each hook adds 1 load-acquire + 1 predictable branch when
+	  the ARG module is not loaded. Required by CONFIG_SCHED_ARG_KMM.
+	  If unsure, say N.
+
+config SCHED_MC

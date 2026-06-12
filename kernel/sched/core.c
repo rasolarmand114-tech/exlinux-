@@ -1323,14 +1323,6 @@ static inline void init_uclamp(void) { }
 #endif /* CONFIG_UCLAMP_TASK */
 
 static inline void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
-	if (!(flags & ENQUEUE_RESTORE))
-		sched_info_queued(rq, p);
-
-#ifdef CONFIG_SCHED_ARG
-	arg_call_enqueue(rq, p);
-#endif
-
-	p->sched_class->enqueue_task(rq, p, flags);
 {
 	if (!(flags & ENQUEUE_NOCLOCK))
 		update_rq_clock(rq);
@@ -1340,28 +1332,12 @@ static inline void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
 		psi_enqueue(p, flags & ENQUEUE_WAKEUP);
 	}
 
-	update_cpu_active_ratio(rq, p, EMS_PART_ENQUEUE);
+#ifdef CONFIG_SCHED_ARG
+	arg_call_enqueue(rq, p);
+#endif
 
-	uclamp_rq_inc(rq, p);
 	p->sched_class->enqueue_task(rq, p, flags);
 }
-
-static inline void dequeue_task(struct rq *rq, struct task_struct *p, int flags)
-{
-	if (!(flags & DEQUEUE_NOCLOCK))
-		update_rq_clock(rq);
-
-	if (!(flags & DEQUEUE_SAVE)) {
-		sched_info_dequeued(rq, p);
-		psi_dequeue(p, flags & DEQUEUE_SLEEP);
-	}
-
-	update_cpu_active_ratio(rq, p, EMS_PART_DEQUEUE);
-
-	uclamp_rq_dec(rq, p);
-	p->sched_class->dequeue_task(rq, p, flags);
-}
-
 void activate_task(struct rq *rq, struct task_struct *p, int flags)
 {
 	if (task_contributes_to_load(p))

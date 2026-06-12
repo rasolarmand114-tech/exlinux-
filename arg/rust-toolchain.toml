@@ -1,0 +1,4 @@
+[toolchain]
+channel    = "nightly-2024-02-01"
+targets    = ["aarch64-unknown-none"]
+components = ["rustfmt", "rust-src"]

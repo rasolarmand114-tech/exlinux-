@@ -1,0 +1,19 @@
+[package]
+name        = "arg-sched"
+version     = "1.0.0"
+edition     = "2021"
+description = "ARG Scheduler Layer — Rust core (Linux 4.19 · ARM64)"
+
+[lib]
+name       = "arg_sched"
+crate-type = ["staticlib"]
+
+[dependencies]
+# No external deps — pure no_std kernel code
+
+[profile.release]
+opt-level       = 2
+lto             = true
+panic           = "abort"
+codegen-units   = 1
+overflow-checks = false

@@ -1,23 +1,23 @@
 # SPDX-License-Identifier: GPL-2.0
 # arg/Makefile — ARG Scheduler Module
 
-obj-$(CONFIG_SCHED_ARG_KMM) += arg_core.o
+obj-$(CONFIG_SCHAD_ARG_KMM) += arg_sched.o
 
-# Object list — all paths relative to $(src)/
-arg_core-y := \
-	arg_core.o \
-	hook/picknext.o \
-	hook/enqueue.o \
-	hook/wakeup.o \
-	hook/load.o \
-	hook/shim.o \
-	arg_rust.o \
+# ── objectها ─────────────────────────────────────────────────────────
+# حتماً -y نه -m  (kbuild همیشه -y برای لیست object استفاده میکنه)
+arg_sched-y :=                \
+	arg_core.o            \
+	hook/picknext.o       \
+	hook/enqueue.o        \
+	hook/wakeup.o         \
+	hook/load.o           \
+	hook/shim.o           \
+	arg_rust.o            \
 	arch/arm64/barriers.o \
-	arch/arm64/cache.o \
-	arch/arm64/atomics.o \
-	arch/arm64/regs.o \
+	arch/arm64/cache.o    \
+	arch/arm64/atomics.o  \
+	arch/arm64/regs.o     \
 	arch/arm64/prefetch.o
-
 # C flags
 ccflags-y += -I$(src)/include
 

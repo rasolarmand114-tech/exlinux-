@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0
 # arg/Kconfig
 
-config SCHAD_ARG_KMM
+config SCHED_ARG_KMM
 	tristate "ARG Scheduler Module (Rust + ARM64 Assembly)"
-	depends on SCHAD_ARG
+	depends on SCHED_ARG
 	depends on SMP
 	depends on ARM64
 	default m

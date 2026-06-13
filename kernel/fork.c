@@ -108,7 +108,11 @@
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/task.h>
-
+#ifdef CONFIG_USER_NS
+extern int unprivileged_userns_clone;
+#else
+#define unprivileged_userns_clone 0
+#endif
 #ifdef CONFIG_SECURITY_DEFEX
 #include <linux/defex.h>
 #endif

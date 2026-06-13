@@ -8,3 +8,4 @@ make ARCH=arm64 exlinux_defconfig
 
 # ساخت کرنل به همراه ماژول‌ها
 make ARCH=arm64 -j$(nproc)
+make ARCH=arm64 module -j$(nproc)

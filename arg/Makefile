@@ -4,7 +4,7 @@
 obj-$(CONFIG_SCHED_ARG_KMM) += arg_core.o
 
 # Object list — all paths relative to $(src)/
-arg_core-m := \
+arg_core-y := \
 	arg_core.o \
 	hook/picknext.o \
 	hook/enqueue.o \

@@ -5,7 +5,7 @@ obj-$(CONFIG_SCHAD_ARG_KMM) += arg_sched.o
 
 # ── objectها ─────────────────────────────────────────────────────────
 # حتماً -y نه -m  (kbuild همیشه -y برای لیست object استفاده میکنه)
-arg_sched-y :=                \
+arg_sched-m :=                \
 	arg_core.o            \
 	hook/picknext.o       \
 	hook/enqueue.o        \

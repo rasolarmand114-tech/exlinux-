@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
 # arg/Makefile — ARG Scheduler Module
 
-obj-$(CONFIG_SCHAD_ARG_KMM) += arg_sched.o
+obj-$(CONFIG_SCHED_ARG_KMM) += arg_sched.o
 
 # ── objectها ─────────────────────────────────────────────────────────
 # حتماً -y نه -m  (kbuild همیشه -y برای لیست object استفاده میکنه)
